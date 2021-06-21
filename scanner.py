@@ -37,13 +37,20 @@ def entry():
                     print("{} is open".format(port))
             except:
                 pass
+            
+            port_q.task_done()
+
     
     target_ip = input("Enter target IP address: ")
+    print("Starting search...")
     # Check if correct format of ip address
 
     start = datetime.now()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=TOTAL_WORKERS) as executor:
-        executor.map(scan_ports, range(TOTAL_WORKERS))
+    
+    for x in range(TOTAL_WORKERS):
+        thread = t.Thread(target=scan_ports)
+        thread.daemon = True
+        thread.start()
 
     port_q.join();
     end = datetime.now()
