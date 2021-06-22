@@ -4,8 +4,11 @@ import threading as t
 from queue import Queue
 from datetime import datetime
 import nmap3
+import json
+import ipaddress
+import sys
 
-TOTAL_PORTS = 5000
+TOTAL_PORTS = 65535
 TOTAL_WORKERS = 200
 THREAD_TIMEOUT = 0.20
 
@@ -20,10 +23,16 @@ ports = []
 
 def run_nmap(target_ip):
     nmap = nmap3.NmapHostDiscovery()
+    print("Press enter for default nmap arguments: -sV -A -sC")
+    args = input("Or enter your own: ")
     if len(ports) > 0:
         joined_ports = ",".join(ports)
-        port_results = nmap.nmap_portscan_only(target_ip, args="-sV -A -p {}".format(joined_ports))
-        print(port_results)
+        default_args = "-sV -A -sC"
+        if args:
+            default_args = args
+        port_results = nmap.nmap_portscan_only(target_ip, args="{} -p {}".format(default_args,joined_ports))
+        print("-" * 30)
+        print(json.dumps(port_results,sort_keys=False, indent=4))
 
 def entry():
     def scan_ports():
@@ -41,9 +50,17 @@ def entry():
             port_q.task_done()
 
     
-    target_ip = input("Enter target IP address: ")
+    target_ip = "127.0.0.1"
+
+    while True:
+        try:
+            target_ip = input("Enter target IP address: ")
+            ipaddress.ip_address(target_ip)
+            break
+        except ValueError:
+            continue
+    
     print("Starting search...")
-    # Check if correct format of ip address
 
     start = datetime.now()
 
@@ -56,9 +73,22 @@ def entry():
     end = datetime.now()
     duration = end-start
     print("-" * 30)
-    print("Duration: " + str(duration))
+    print("Scan duration: " + str(duration))
     print("-" * 30)
-    run_nmap(target_ip)
+    
+    user_selection = "0"
+    while user_selection == "0":
+        print("1 - Run nmap")
+        print("2 - Quit")
+        user_selection = input("\nSelection: ")
+        print("-" * 30)
+        if user_selection == "1":
+            run_nmap(target_ip)
+        elif user_selection == "2":
+            sys.exit()
+        else: 
+            user_selection = "0"
+    
 
 
 if __name__ == '__main__':
@@ -68,5 +98,5 @@ if __name__ == '__main__':
         print("-" * 30)
         entry()
     except KeyboardInterrupt:
-        print("\n Finished")
+        print("\nFinished")
         quit()
