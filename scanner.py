@@ -60,7 +60,7 @@ def entry():
         except ValueError:
             continue
     
-    print("Starting search...")
+    print("Starting scan...")
 
     start = datetime.now()
 
