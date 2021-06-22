@@ -3,8 +3,9 @@ import socket as s
 import threading as t
 from queue import Queue
 from datetime import datetime
+import nmap3
 
-TOTAL_PORTS = 65536
+TOTAL_PORTS = 5000
 TOTAL_WORKERS = 200
 THREAD_TIMEOUT = 0.20
 
@@ -17,8 +18,12 @@ s.setdefaulttimeout(THREAD_TIMEOUT)
 t_lock = t.Lock()
 ports = []
 
-def run_nmap():
-    print("Nmap")
+def run_nmap(target_ip):
+    nmap = nmap3.NmapHostDiscovery()
+    if len(ports) > 0:
+        joined_ports = ",".join(ports)
+        port_results = nmap.nmap_portscan_only(target_ip, args="-sV -A -p {}".format(joined_ports))
+        print(port_results)
 
 def entry():
     def scan_ports():
@@ -50,7 +55,11 @@ def entry():
     port_q.join();
     end = datetime.now()
     duration = end-start
+    print("-" * 30)
     print("Duration: " + str(duration))
+    print("-" * 30)
+    run_nmap(target_ip)
+
 
 if __name__ == '__main__':
     try:
